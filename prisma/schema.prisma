@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  author
+  official
+  admin
+}
+
+model Users {
+  id            Int             @id @default(autoincrement())
+  fullName      String
+  username      String          @unique
+  email         String          @unique
+  phone         String          @unique
+  password      String
+  gender        String
+  bio           String?
+  profileImage  String?
+  dateOfBirth   String
+  country       String
+  userType      UserType
+  news          News[]
+  comments      Comments[]
+  intrestedTags IntrestedTags[]
+  followers     Follows[]       @relation("following")
+  following     Follows[]       @relation("follower")
+}
+
+model Follows {
+  id          Int   @id @default(autoincrement())
+  followerId  Int
+  follower    Users @relation("follower", fields: [followerId], references: [id])
+  followingId Int
+  following   Users @relation("following", fields: [followingId], references: [id])
+}
+
+model IntrestedTags {
+  id     Int   @id @default(autoincrement())
+  userId Int
+  user   Users @relation(fields: [userId], references: [id])
+  tagId  Int
+  tag    Tags  @relation(fields: [tagId], references: [id])
+}
+
+model Tags {
+  id            Int             @id @default(autoincrement())
+  tag           String
+  intrestedTags IntrestedTags[]
+}
+
+model News {
+  id          Int        @id @default(autoincrement())
+  title       String
+  coverImage  String
+  readTime    String
+  viewsCount  String
+  description String
+  isTrending  Boolean
+  createdAt   DateTime   @default(now())
+  Users       Users?     @relation(fields: [creatorId], references: [id])
+  creatorId   Int?
+  comments    Comments[]
+}
+
+model Comments {
+  id        Int        @id @default(autoincrement())
+  comment   String
+  News      News?      @relation(fields: [newsId], references: [id])
+  newsId    Int?
+  Users     Users?     @relation(fields: [creatorId], references: [id])
+  creatorId Int?
+  parentId  Int?
+  parent    Comments?  @relation("reply_comments", fields: [parentId], references: [id])
+  comments  Comments[] @relation("reply_comments")
+}
