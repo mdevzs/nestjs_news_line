@@ -34,6 +34,7 @@ model Users {
   intrestedTags IntrestedTags[]
   followers     Follows[]       @relation("following")
   following     Follows[]       @relation("follower")
+  commentLikes  CommentLikes[]
 }
 
 model Follows {
@@ -56,6 +57,7 @@ model Tags {
   id            Int             @id @default(autoincrement())
   tag           String
   intrestedTags IntrestedTags[]
+  tagNews       TagNews[]
 }
 
 model News {
@@ -65,21 +67,40 @@ model News {
   readTime    String
   viewsCount  String
   description String
-  isTrending  Boolean
+  isTrending  Boolean    @default(false)
   createdAt   DateTime   @default(now())
-  Users       Users?     @relation(fields: [creatorId], references: [id])
+  creator     Users?     @relation(fields: [creatorId], references: [id])
   creatorId   Int?
   comments    Comments[]
+  tagNews     TagNews[]
+}
+
+model TagNews {
+  id     Int  @id @default(autoincrement())
+  tagId  Int
+  tag    Tags @relation(fields: [tagId], references: [id])
+  newsId Int
+  news   News @relation(fields: [newsId], references: [id])
 }
 
 model Comments {
-  id        Int        @id @default(autoincrement())
-  comment   String
-  News      News?      @relation(fields: [newsId], references: [id])
-  newsId    Int?
-  Users     Users?     @relation(fields: [creatorId], references: [id])
-  creatorId Int?
-  parentId  Int?
-  parent    Comments?  @relation("reply_comments", fields: [parentId], references: [id])
-  comments  Comments[] @relation("reply_comments")
+  id           Int            @id @default(autoincrement())
+  comment      String
+  news         News?          @relation(fields: [newsId], references: [id])
+  newsId       Int?
+  users        Users?         @relation(fields: [creatorId], references: [id])
+  creatorId    Int?
+  parentId     Int?
+  createdAt    DateTime       @default(now())
+  parent       Comments?      @relation("reply_comments", fields: [parentId], references: [id])
+  comments     Comments[]     @relation("reply_comments")
+  commentLikes CommentLikes[]
+}
+
+model CommentLikes {
+  id        Int      @id @default(autoincrement())
+  commentId Int
+  comment   Comments @relation(fields: [commentId], references: [id])
+  userId    Int
+  user      Users    @relation(fields: [userId], references: [id])
 }
