@@ -15,6 +15,7 @@ import { CommentsController } from './comments/comments.controller';
       useClass: ClassSerializerInterceptor
     },
     CommentsService,
-  ]
+  ],
+  exports: [NewsService, CommentsService]
 })
 export class NewsModule { }

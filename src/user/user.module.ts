@@ -20,6 +20,7 @@ import { JwtModule } from '@nestjs/jwt';
   providers: [AuthService, {
     provide: APP_INTERCEPTOR,
     useClass: ClassSerializerInterceptor
-  }, ProfileService]
+  }, ProfileService],
+  exports:[ProfileService]
 })
 export class UserModule {}

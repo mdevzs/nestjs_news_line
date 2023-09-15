@@ -25,7 +25,7 @@ export class CommentsService {
                 newsId
             },
             include: {
-                users: {
+                creator: {
                     select: {
                         id: true,
                         fullName: true,
@@ -41,7 +41,7 @@ export class CommentsService {
             new ResponseCommnetNewsDto({
                 ...comment,
                 likeCounts: likeCounts._count.commentId,
-                createdAt:formatDistance(Date.now(),comment.createdAt)
+                createdAt:`${formatDistance(Date.now(),comment.createdAt)} ago`
             })
         );
     }

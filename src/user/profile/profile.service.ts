@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ResponseProfileDto } from './dtos/profile.dtos';
 
 @Injectable()
 export class ProfileService {
     constructor(private readonly prismaService: PrismaService) { }
 
     async profile(id: number) {
-        const user = this.prismaService.users.findUnique({
+        const user = await this.prismaService.users.findUnique({
             where: {
                 id
             },
@@ -24,7 +25,7 @@ export class ProfileService {
                 },
             }
         })
-        return user;
+        return new ResponseProfileDto(user);
     }
 
 }

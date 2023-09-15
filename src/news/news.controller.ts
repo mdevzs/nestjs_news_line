@@ -38,6 +38,12 @@ export class NewsController {
         return this.newsService.createNew(body, user.id, coverImage);
     }
 
+    @Get('/:id')
+    getNewsById(
+        @Param('id') newsId: number,
+    ) {
+        return this.newsService.getNewsById(newsId)
+    }
 
     @Roles(['admin'])
     @UseGuards(AuthenticationGuard, AuthorizationGuard)
@@ -80,7 +86,7 @@ export class NewsController {
         @Body() body: RecentNewsDto,
     ) {
         return this.newsService.getAllRecentNews(body)
-    }    
+    }
 
     @Get('images/:fileId')
     async getfileUpload(@Param('fileId') fileId, @Res() res) {

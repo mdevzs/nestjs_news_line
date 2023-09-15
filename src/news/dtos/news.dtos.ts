@@ -1,5 +1,7 @@
 import { Exclude } from "class-transformer"
 import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator"
+import { UserResponseDto } from "src/user/auth/dtos/auth.dto"
+import { ResponseCommnetNewsDto } from "../comments/dtos/comments.dtos"
 
 export class CreateNewsDto {
     @IsString()
@@ -55,14 +57,27 @@ export class RecentNewsDto {
 }
 
 export class ResponseRecentTrendingNewsDto {
+    coverImage: string
     createdAt: string
     creator: { id: number, profileImage: string, fullName?: string }
     commentCounts: number
 
     @Exclude()
-    _count:{}
+    _count: {}
 
     constructor(partial: Partial<ResponseRecentTrendingNewsDto>) {
+        Object.assign(this, partial)
+    }
+}
+
+export class ResponseNewsByIdDto {
+    coverImage: string
+    creator: UserResponseDto
+    comments: {}
+    userNews: {}[]
+    createdAt: string
+
+    constructor(partial: Partial<ResponseNewsByIdDto>) {
         Object.assign(this, partial)
     }
 }

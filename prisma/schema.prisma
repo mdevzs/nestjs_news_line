@@ -88,7 +88,7 @@ model Comments {
   comment      String
   news         News?          @relation(fields: [newsId], references: [id])
   newsId       Int?
-  users        Users?         @relation(fields: [creatorId], references: [id])
+  creator        Users?         @relation(fields: [creatorId], references: [id])
   creatorId    Int?
   parentId     Int?
   createdAt    DateTime       @default(now())

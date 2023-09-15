@@ -1,11 +1,15 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AddTrendingNewsDto, CreateNewsDto, RecentNewsDto, ResponseRecentTrendingNewsDto, UpdatedNewsDto } from './dtos/news.dtos';
+import { AddTrendingNewsDto, CreateNewsDto, RecentNewsDto, ResponseNewsByIdDto, ResponseRecentTrendingNewsDto, UpdatedNewsDto } from './dtos/news.dtos';
 import { formatDistance } from 'date-fns';
+import { ta } from 'date-fns/locale';
+import { UserResponseDto } from 'src/user/auth/dtos/auth.dto';
+import { ResponseCommnetNewsDto } from './comments/dtos/comments.dtos';
+import { CommentsService } from './comments/comments.service';
 
 @Injectable()
 export class NewsService {
-    constructor(private readonly prismaService: PrismaService) { }
+    constructor(private readonly prismaService: PrismaService, private readonly commentsService: CommentsService) { }
 
     async createNew({ title, description, readTime, tags }: CreateNewsDto, creatorId: number, coverImage: Express.Multer.File) {
         const news = await this.prismaService.news.create({
@@ -24,6 +28,75 @@ export class NewsService {
             }
         })
         return { ...news, coverImage: `http://localhost:3000/news/images/${news.coverImage}` };
+    }
+
+    async getNewsById(newsId: number) {
+        const news = await this.prismaService.news.findFirst({
+            where: {
+                id: newsId
+            },
+            include: {
+                tagNews: {
+                    include: {
+                        tag: true
+                    }
+                },
+                creator: true,
+                comments: {
+                    include: {
+                        creator: {
+                            select: {
+                                id: true,
+                                fullName: true,
+                                profileImage: true,
+                            }
+                        }
+                    }
+                },
+            }
+        })
+
+        const comments = await this.commentsService.getAllNewsComments(newsId)
+        const userNews = await this.getAllUserNews(news.creator.id)
+
+        return new ResponseNewsByIdDto({
+            ...news,
+            coverImage: `http://localhost:3000/news/images/${news.coverImage}`,
+            creator: new UserResponseDto({
+                ...news.creator,
+                profileImage: news.creator.profileImage !== null ? `http://localhost:3000/profile/images/${news.creator.profileImage}` : null
+            }),
+            comments: comments,
+            userNews,
+            createdAt: `${formatDistance(Date.now(), news.createdAt)} ago`
+        }
+        )
+    }
+
+    async getAllUserNews(userId: number) {
+        const userNews = await this.prismaService.news.findMany({
+            where: {
+                creatorId: userId
+            },
+            include: {
+                _count: { select: { comments: true } },
+                creator: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        profileImage: true
+                    }
+                }
+            }
+        })
+        return userNews.map(uNews =>
+            new ResponseRecentTrendingNewsDto({
+                ...uNews, createdAt: `${formatDistance(Date.now(), uNews.createdAt)} ago`,
+                coverImage: `http://localhost:3000/news/images/${uNews.coverImage}`,
+                creator: { id: uNews.creator.id, profileImage: `http://localhost:3000/profile/images/${uNews.creator.profileImage}`, fullName: uNews.creator.fullName },
+                commentCounts: uNews._count.comments
+            })
+        );
     }
 
     async addTrendingNews({ isTrending }: AddTrendingNewsDto, newsId: number) {
@@ -110,16 +183,18 @@ export class NewsService {
     }
 
     async getAllRecentNews({ tag }: RecentNewsDto) {
-        const recentNews = await this.prismaService.news.findMany({
-            where: {
+        var whereCondition = {}
+        if (tag !== 'all') {
+            whereCondition = {
                 tagNews: {
                     every: {
-                        tag: {
-                            tag: tag
-                        }
+                        tag: { tag: tag }
                     }
                 }
-            },
+            }
+        }
+        const recentNews = await this.prismaService.news.findMany({
+            where: whereCondition,
             include: {
                 tagNews: {
                     select: {
