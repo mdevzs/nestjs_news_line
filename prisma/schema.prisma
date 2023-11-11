@@ -56,6 +56,7 @@ model IntrestedTags {
 model Tags {
   id            Int             @id @default(autoincrement())
   tag           String
+  image         String
   intrestedTags IntrestedTags[]
   tagNews       TagNews[]
 }
@@ -88,7 +89,7 @@ model Comments {
   comment      String
   news         News?          @relation(fields: [newsId], references: [id])
   newsId       Int?
-  creator        Users?         @relation(fields: [creatorId], references: [id])
+  creator      Users?         @relation(fields: [creatorId], references: [id])
   creatorId    Int?
   parentId     Int?
   createdAt    DateTime       @default(now())
@@ -103,4 +104,10 @@ model CommentLikes {
   comment   Comments @relation(fields: [commentId], references: [id])
   userId    Int
   user      Users    @relation(fields: [userId], references: [id])
+}
+
+model Countries {
+  id   Int    @id @default(autoincrement())
+  name String
+  flag String
 }

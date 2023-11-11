@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseEnumPipe, Post, UnauthorizedException, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, HttpCode, Param, ParseEnumPipe, Post, UnauthorizedException, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { GrOfficialKeyDto, SigninDto, SignupDto } from './dtos/auth.dto';
 import { UserType } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -49,6 +49,7 @@ export class AuthController {
     }
 
     @Post('signin')
+    @HttpCode(200)
     async signin(
         @Body() body: SigninDto
     ) {

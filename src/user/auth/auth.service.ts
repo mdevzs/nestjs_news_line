@@ -64,8 +64,12 @@ export class AuthService {
                 }
             }
         })
-
-        return new UserResponseDto({ ...user, profileImage: user.profileImage != null ? `http://localhost:3000/profile/images/${user.profileImage}` : null });
+        const token = await this.generateJWT(user.id, user.fullName)
+        return new UserResponseDto({
+            ...user,
+            profileImage: user.profileImage != null ? `http://localhost:3000/profile/images/${user.profileImage}` : null,
+            token,
+        });
     }
 
     async signin({ email, password }: SigninDto) {
