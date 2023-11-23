@@ -2,10 +2,10 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddTrendingNewsDto, CreateNewsDto, RecentNewsDto, ResponseNewsByIdDto, ResponseRecentTrendingNewsDto, UpdatedNewsDto } from './dtos/news.dtos';
 import { formatDistance } from 'date-fns';
-import { ta } from 'date-fns/locale';
 import { UserResponseDto } from 'src/user/auth/dtos/auth.dto';
-import { ResponseCommnetNewsDto } from './comments/dtos/comments.dtos';
 import { CommentsService } from './comments/comments.service';
+import { createPaginator } from 'prisma-pagination';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class NewsService {
@@ -156,72 +156,137 @@ export class NewsService {
         })
     }
 
-    async trendingNews() {
-        const trendingNews = await this.prismaService.news.findMany({
-            where: {
-                isTrending: true
-            },
-            include: {
-                _count: { select: { comments: true } },
-                creator: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        profileImage: true
+    async allTrendingNews(page: string, perPage: string,) {        
+        const paginate = createPaginator({ perPage: perPage ?? '10' });
+        const result = paginate<ResponseRecentTrendingNewsDto, Prisma.NewsFindManyArgs>(
+            this.prismaService.news,
+            {
+                where:{isTrending:true},
+                include: {
+                    _count: { select: { comments: true } },
+                    creator: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            profileImage: true
+                        }
                     }
                 }
-            }
-        })
-
-        return trendingNews.map(trending =>
-            new ResponseRecentTrendingNewsDto({
-                ...trending, createdAt: `${formatDistance(Date.now(), trending.createdAt)} ago`,
-                creator: { id: trending.creator.id, profileImage: `http://localhost:3000/profile/images/${trending.creator.profileImage}`, fullName: trending.creator.fullName },
-                commentCounts: trending._count.comments
-            })
+            },
+            {
+                page: page ?? '1',
+            },
         );
+        (await result).data.map(news => {
+            news.coverImage = news.coverImage != null ? `http://192.168.0.103:3000/news/images/${news.coverImage}` : null
+            news.createdAt = `${formatDistance(Date.now(), Number(news.createdAt))} ago`
+            news.commentCounts = news._count.comments
+            news.creator = { id: news.creator.id, fullName: news.creator.fullName, profileImage: news.creator.profileImage != null ? `http://192.168.0.103:3000/profile/images/${news.creator.profileImage}` : null }
+        })
+        return result
     }
 
-    async getAllRecentNews({ tag }: RecentNewsDto) {
+    async getAllRecentNews({ tag }: RecentNewsDto, page: string, perPage: string) {
         var whereCondition = {}
         if (tag !== 'all') {
             whereCondition = {
                 tagNews: {
                     every: {
-                        tag: { tag: tag }
+                        tag: {
+                            tag: {
+                                contains: tag,
+                                mode: 'insensitive',
+                            }
+
+                        }
                     }
                 }
             }
         }
-        const recentNews = await this.prismaService.news.findMany({
-            where: whereCondition,
-            include: {
-                tagNews: {
-                    select: {
-                        tag: true
+
+        const paginate = createPaginator({ perPage: perPage ?? '10' });
+        const result = paginate<ResponseRecentTrendingNewsDto, Prisma.NewsFindManyArgs>(
+            this.prismaService.news,
+            {
+                where: whereCondition,
+                include: {
+                    tagNews: {
+                        select: {
+                            tag: true
+                        }
+                    },
+                    _count: { select: { comments: true } },
+                    creator: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            profileImage: true
+                        }
                     }
                 },
-                creator: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        profileImage: true
-                    }
+                orderBy: {
+                    createdAt: 'desc'
                 }
             },
-            orderBy: {
-                createdAt: 'desc'
-            }
+            {
+                page: page ?? '1',
+            },
+        );
+        (await result).data.map(news => {
+            news.coverImage = news.coverImage != null ? `http://192.168.0.103:3000/news/images/${news.coverImage}` : null
+            news.createdAt = `${formatDistance(Date.now(), Number(news.createdAt))} ago`
+            news.commentCounts = news._count.comments
+            news.creator = { id: news.creator.id, fullName: news.creator.fullName, profileImage: news.creator.profileImage != null ? `http://192.168.0.103:3000/profile/images/${news.creator.profileImage}` : null }
         })
+        return result;
 
-        return recentNews.map(news =>
-            new ResponseRecentTrendingNewsDto(
-                {
-                    ...news,
-                    createdAt: `${formatDistance(Date.now(), news.createdAt)} ago`,
-                    creator: { id: news.creator.id, profileImage: `http://localhost:3000/profile/images/${news.creator.profileImage}`, fullName: news.creator.fullName }
-                }
-            )
-        )
+        // const recentNews = await this.prismaService.news.findMany({
+        //     where: whereCondition,
+        //     include: {
+        //         tagNews: {
+        //             select: {
+        //                 tag: true
+        //             }
+        //         },
+        //         _count: { select: { comments: true } },
+        //         creator: {
+        //             select: {
+        //                 id: true,
+        //                 fullName: true,
+        //                 profileImage: true
+        //             }
+        //         }
+        //     },
+        //     orderBy: {
+        //         createdAt: 'desc'
+        //     }
+        // })
+
+        // var recent = []
+        // var pPerPaage
+        // recentNews.forEach(news => {
+        //     if (pPerPaage <= perPage) {
+        //         news.tagNews.forEach(tagNews => {
+        //             tags.push(new ResponseTagDto({ ...tagNews.tag, image: `http://192.168.0.103:3000/public/images/${tagNews.tag.image}` }))
+        //         })
+        //         recent.push(
+        //             new ResponseRecentTrendingNewsDto(
+        //                 {
+        //                     ...news,
+        //                     coverImage: news.coverImage != null ? `http://192.168.0.103:3000/news/images/${news.coverImage}` : null,
+        //                     createdAt: `${formatDistance(Date.now(), news.createdAt)} ago`,
+        //                     creator: { id: news.creator.id, profileImage: `http://192.168.0.103:3000/profile/images/${news.creator.profileImage}`, fullName: news.creator.fullName },
+        //                     commentCounts: news._count.comments,
+        //                     tagNews: tags
+        //                 }
+        //             )
+        //         )
+        //         tags = []
+        //         pPerPaage
+        //     }
+        // });
+        // (await result).data = recent
+        // return result
+
     }
 }

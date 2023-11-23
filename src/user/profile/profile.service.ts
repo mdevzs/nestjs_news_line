@@ -25,7 +25,7 @@ export class ProfileService {
                 },
             }
         })
-        return new ResponseProfileDto(user);
+        return new ResponseProfileDto({ ...user, profileImage: user.profileImage != null ? `http://192.168.0.103:3000/profile/images/${user.profileImage}` : null, });
     }
 
 }

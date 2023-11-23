@@ -59,11 +59,12 @@ export class RecentNewsDto {
 export class ResponseRecentTrendingNewsDto {
     coverImage: string
     createdAt: string
-    creator: { id: number, profileImage: string, fullName?: string }
+    creator: { id: number, profileImage?: string, fullName?: string }
     commentCounts: number
+    tagNews: {}
 
     @Exclude()
-    _count: {}
+    _count: { comments: number }
 
     constructor(partial: Partial<ResponseRecentTrendingNewsDto>) {
         Object.assign(this, partial)

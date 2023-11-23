@@ -1,11 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { AuthenticationGuard } from 'src/user/guards/authentication.guard';
-import { AddTrendingNewsDto, CreateNewsDto, RecentNewsDto, UpdatedNewsDto } from './dtos/news.dtos';
+import { AddTrendingNewsDto, CreateNewsDto, RecentNewsDto, ResponseRecentTrendingNewsDto, UpdatedNewsDto } from './dtos/news.dtos';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { Roles } from 'src/user/decorators/roles.decorators';
 import { AuthorizationGuard } from 'src/user/guards/authorization.guard';
+import { ApiPaginatedResponse } from 'src/public/decorators/public.decorators';
 
 @Controller('news')
 export class NewsController {
@@ -36,14 +37,7 @@ export class NewsController {
         @Req() { user }
     ) {
         return this.newsService.createNew(body, user.id, coverImage);
-    }
-
-    @Get('/:id')
-    getNewsById(
-        @Param('id') newsId: number,
-    ) {
-        return this.newsService.getNewsById(newsId)
-    }
+    }    
 
     @Roles(['admin'])
     @UseGuards(AuthenticationGuard, AuthorizationGuard)
@@ -75,20 +69,36 @@ export class NewsController {
         return this.newsService.deleteNews(newsId, user.id);
     }
 
-    @Get('/trending')
-    trendingNews(
-    ) {
-        return this.newsService.trendingNews()
-    }
+    
 
     @Post('/recent')
+    @ApiPaginatedResponse(ResponseRecentTrendingNewsDto)
     getAllRecentNews(
         @Body() body: RecentNewsDto,
+        @Query('page') page: string,
+        @Query('perPage') perPage: string,
     ) {
-        return this.newsService.getAllRecentNews(body)
+        return this.newsService.getAllRecentNews(body, page, perPage,)
     }
 
-    @Get('images/:fileId')
+
+    @Get('/all-trending-news')
+    @ApiPaginatedResponse(ResponseRecentTrendingNewsDto)
+    allTrendingNews(
+        @Query('page') page: string,
+        @Query('perPage') perPage: string,
+    ) {
+        return this.newsService.allTrendingNews(page, perPage,)
+    }
+
+    @Get('/:id')
+    getNewsById(
+        @Param('id') newsId: number,
+    ) {
+        return this.newsService.getNewsById(newsId)
+    }
+
+    @Get('/images/:fileId')
     async getfileUpload(@Param('fileId') fileId, @Res() res) {
         res.sendFile(fileId, { root: './uploads/images' });
     }
