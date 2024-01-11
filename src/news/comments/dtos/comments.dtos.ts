@@ -13,10 +13,26 @@ export class CommnetNewsDto {
 }
 
 export class ResponseCommnetNewsDto {
-    likeCounts: number
-    createdAt: string    
+    likeCounts?: number
+    createdAt: string
+    isLiked: boolean
+    creator: { id: number, fullName: string, profileImage: string }
+    replies: {}
+    @Exclude()
+    commentLikes: {}
+    @Exclude()
+    comments: {}
 
     constructor(partial: Partial<ResponseCommnetNewsDto>) {
+        Object.assign(this, partial)
+    }
+}
+
+export class ResponseGetAllCommentsDto {
+    top: {}
+    newest: {}
+
+    constructor(partial: Partial<ResponseGetAllCommentsDto>) {
         Object.assign(this, partial)
     }
 }

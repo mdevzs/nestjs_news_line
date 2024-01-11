@@ -75,8 +75,12 @@ export class ResponseNewsByIdDto {
     coverImage: string
     creator: UserResponseDto
     comments: {}
+    commentsCount: number
     userNews: {}[]
-    createdAt: string
+    createdAt: string   
+
+    @Exclude()
+    _count: {}
 
     constructor(partial: Partial<ResponseNewsByIdDto>) {
         Object.assign(this, partial)

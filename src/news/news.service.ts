@@ -27,21 +27,27 @@ export class NewsService {
                 }
             }
         })
-        return { ...news, coverImage: `http://localhost:3000/news/images/${news.coverImage}` };
+        return { ...news, coverImage: `http://192.168.0.103:3000/news/images/${news.coverImage}` };
     }
 
-    async getNewsById(newsId: number) {
+    async getNewsById(newsId: number, userId: number) {
         const news = await this.prismaService.news.findFirst({
             where: {
                 id: newsId
             },
             include: {
+                _count: { select: { comments: true } },
                 tagNews: {
                     include: {
                         tag: true
                     }
                 },
-                creator: true,
+                creator: {
+                    include: {
+                        _count: { select: { followers: true } },
+                    }
+                },
+
                 comments: {
                     include: {
                         creator: {
@@ -56,19 +62,21 @@ export class NewsService {
             }
         })
 
-        const comments = await this.commentsService.getAllNewsComments(newsId)
+        const comments = await this.commentsService.getAllNewsComments(newsId, userId)
         const userNews = await this.getAllUserNews(news.creator.id)
 
         return new ResponseNewsByIdDto({
             ...news,
-            coverImage: `http://localhost:3000/news/images/${news.coverImage}`,
+            coverImage: `http://192.168.0.103:3000/news/images/${news.coverImage}`,
             creator: new UserResponseDto({
                 ...news.creator,
-                profileImage: news.creator.profileImage !== null ? `http://localhost:3000/profile/images/${news.creator.profileImage}` : null
+                profileImage: news.creator.profileImage !== null ? `http://192.168.0.103:3000/profile/images/${news.creator.profileImage}` : null,
+                followersCount: news.creator._count.followers,
             }),
             comments: comments,
+            commentsCount: news._count.comments,
             userNews,
-            createdAt: `${formatDistance(Date.now(), news.createdAt)} ago`
+            createdAt: `${formatDistance(Date.now(), news.createdAt)} ago`,
         }
         )
     }
@@ -92,8 +100,8 @@ export class NewsService {
         return userNews.map(uNews =>
             new ResponseRecentTrendingNewsDto({
                 ...uNews, createdAt: `${formatDistance(Date.now(), uNews.createdAt)} ago`,
-                coverImage: `http://localhost:3000/news/images/${uNews.coverImage}`,
-                creator: { id: uNews.creator.id, profileImage: `http://localhost:3000/profile/images/${uNews.creator.profileImage}`, fullName: uNews.creator.fullName },
+                coverImage: `http://192.168.0.103:3000/news/images/${uNews.coverImage}`,
+                creator: { id: uNews.creator.id, profileImage: `http://192.168.0.103:3000/profile/images/${uNews.creator.profileImage}`, fullName: uNews.creator.fullName },
                 commentCounts: uNews._count.comments
             })
         );
@@ -156,12 +164,12 @@ export class NewsService {
         })
     }
 
-    async allTrendingNews(page: string, perPage: string,) {        
+    async allTrendingNews(page: string, perPage: string,) {
         const paginate = createPaginator({ perPage: perPage ?? '10' });
         const result = paginate<ResponseRecentTrendingNewsDto, Prisma.NewsFindManyArgs>(
             this.prismaService.news,
             {
-                where:{isTrending:true},
+                where: { isTrending: true },
                 include: {
                     _count: { select: { comments: true } },
                     creator: {
@@ -171,6 +179,9 @@ export class NewsService {
                             profileImage: true
                         }
                     }
+                },
+                orderBy: {
+                    createdAt: 'desc'
                 }
             },
             {
@@ -239,54 +250,5 @@ export class NewsService {
             news.creator = { id: news.creator.id, fullName: news.creator.fullName, profileImage: news.creator.profileImage != null ? `http://192.168.0.103:3000/profile/images/${news.creator.profileImage}` : null }
         })
         return result;
-
-        // const recentNews = await this.prismaService.news.findMany({
-        //     where: whereCondition,
-        //     include: {
-        //         tagNews: {
-        //             select: {
-        //                 tag: true
-        //             }
-        //         },
-        //         _count: { select: { comments: true } },
-        //         creator: {
-        //             select: {
-        //                 id: true,
-        //                 fullName: true,
-        //                 profileImage: true
-        //             }
-        //         }
-        //     },
-        //     orderBy: {
-        //         createdAt: 'desc'
-        //     }
-        // })
-
-        // var recent = []
-        // var pPerPaage
-        // recentNews.forEach(news => {
-        //     if (pPerPaage <= perPage) {
-        //         news.tagNews.forEach(tagNews => {
-        //             tags.push(new ResponseTagDto({ ...tagNews.tag, image: `http://192.168.0.103:3000/public/images/${tagNews.tag.image}` }))
-        //         })
-        //         recent.push(
-        //             new ResponseRecentTrendingNewsDto(
-        //                 {
-        //                     ...news,
-        //                     coverImage: news.coverImage != null ? `http://192.168.0.103:3000/news/images/${news.coverImage}` : null,
-        //                     createdAt: `${formatDistance(Date.now(), news.createdAt)} ago`,
-        //                     creator: { id: news.creator.id, profileImage: `http://192.168.0.103:3000/profile/images/${news.creator.profileImage}`, fullName: news.creator.fullName },
-        //                     commentCounts: news._count.comments,
-        //                     tagNews: tags
-        //                 }
-        //             )
-        //         )
-        //         tags = []
-        //         pPerPaage
-        //     }
-        // });
-        // (await result).data = recent
-        // return result
-
     }
 }

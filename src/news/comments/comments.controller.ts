@@ -5,7 +5,7 @@ import { CommentsService } from './comments.service';
 
 @Controller('news')
 export class CommentsController {
-    constructor(private readonly commentsService:CommentsService){}
+    constructor(private readonly commentsService: CommentsService) { }
 
     @UseGuards(AuthenticationGuard)
     @Post('/:id/comments')
@@ -21,8 +21,9 @@ export class CommentsController {
     @Get('/:id/comments')
     getAllComments(
         @Param('id') newsId: number,
+        @Req() { user },
     ) {
-        return this.commentsService.getAllNewsComments(newsId);
+        return this.commentsService.getAllNewsComments(newsId, user.id);
     }
 
     @UseGuards(AuthenticationGuard)
@@ -31,6 +32,6 @@ export class CommentsController {
         @Param('id') commentId: number,
         @Req() { user },
     ) {
-        return this.commentsService.likeComment(commentId,user.id);
+        return this.commentsService.likeComment(commentId, user.id);
     }
 }

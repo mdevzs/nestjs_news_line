@@ -37,7 +37,7 @@ export class NewsController {
         @Req() { user }
     ) {
         return this.newsService.createNew(body, user.id, coverImage);
-    }    
+    }
 
     @Roles(['admin'])
     @UseGuards(AuthenticationGuard, AuthorizationGuard)
@@ -69,7 +69,7 @@ export class NewsController {
         return this.newsService.deleteNews(newsId, user.id);
     }
 
-    
+
 
     @Post('/recent')
     @ApiPaginatedResponse(ResponseRecentTrendingNewsDto)
@@ -92,10 +92,12 @@ export class NewsController {
     }
 
     @Get('/:id')
+    @UseGuards(AuthenticationGuard)
     getNewsById(
         @Param('id') newsId: number,
+        @Req() { user },
     ) {
-        return this.newsService.getNewsById(newsId)
+        return this.newsService.getNewsById(newsId, user.id)
     }
 
     @Get('/images/:fileId')

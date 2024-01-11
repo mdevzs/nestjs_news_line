@@ -62,9 +62,12 @@ export class UserResponseDto {
     dateOfBirth: string
     bio: string
     profileImage?: string
-    token?:string
+    followersCount?: number
+    token?: string
     @Exclude()
     password: string
+    @Exclude()
+    _count: {}
 
     constructor(partial: Partial<UserResponseDto>) {
         Object.assign(this, partial)
