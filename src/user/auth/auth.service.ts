@@ -98,6 +98,34 @@ export class AuthService {
         })
     }
 
+    async followAuthor(followerId: string, followingId: string) {
+        const isFollowed = await this.prismaService.follows.findFirst(
+            {
+                where: {
+                    followerId: { equals: parseInt(followerId) },
+                    followingId: { equals: parseInt(followingId) }
+                }
+            }
+        )
+
+        if (!isFollowed) {
+            await this.prismaService.follows.create({
+                data: {
+                    followerId: parseInt(followerId),
+                    followingId: parseInt(followingId),
+                }
+            })
+        } else {
+            await this.prismaService.follows.delete(
+                {
+                    where: {
+                        id: isFollowed.id
+                    }
+                }
+            )
+        }
+    }
+
     async grOfficialAuthorKey({ email, userType }: GrOfficialKeyDto) {
         const secret = `${email}-${userType}-${process.env.GENERATE_OFFICIAL_AUTHOR_SECRET}`
 

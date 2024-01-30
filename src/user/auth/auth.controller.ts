@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Param, ParseEnumPipe, Post, UnauthorizedException, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseEnumPipe, Post, Req, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { GrOfficialKeyDto, SigninDto, SignupDto } from './dtos/auth.dto';
 import { UserType } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -6,6 +6,7 @@ import { diskStorage } from 'multer';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcryptjs';
 import { bindCallback } from 'rxjs';
+import { AuthenticationGuard } from '../guards/authentication.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -54,6 +55,16 @@ export class AuthController {
         @Body() body: SigninDto
     ) {
         return this.authService.signin(body);
+    }
+
+    @UseGuards(AuthenticationGuard)
+    @Get('/follow/:followingId')
+    async followAuthor(
+        @Param('followingId') followingId: string,
+        @Req() { user },
+    ) {
+        console.log('this follow user is called!')
+        return this.authService.followAuthor(user.id, followingId,);        
     }
 
     @Post('verify-official-author')

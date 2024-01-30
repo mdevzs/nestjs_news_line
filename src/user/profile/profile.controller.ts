@@ -1,13 +1,18 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
+import { Controller, Get, Param, Req, Res, UseGuards } from '@nestjs/common';
 import { ProfileService } from './profile.service';
+import { AuthenticationGuard } from '../guards/authentication.guard';
 
 @Controller('profile')
 export class ProfileController {
-    constructor(private readonly profileService:ProfileService){}
+    constructor(private readonly profileService: ProfileService) { }
 
-    @Get()
-    async profile(){
-        return this.profileService.profile(8);
+    @UseGuards(AuthenticationGuard)
+    @Get(':profileId')
+    async profile(
+        @Req() { user },
+        @Param('profileId') profileId: string,
+    ) {
+        return this.profileService.profile(user.id, parseInt(profileId),);
     }
 
     @Get('images/:fileId')

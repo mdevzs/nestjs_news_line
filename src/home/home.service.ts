@@ -12,12 +12,12 @@ export class HomeService {
     ) { }
 
     async home(userId: number) {
-        const user = await this.profileService.profile(userId);
-        const trendingNews = await this.newsService.allTrendingNews('1','5')
+        const user = await this.profileService.profile(userId, userId,);
+        const trendingNews = await this.newsService.allTrendingNews('1', '5')
         //const recentNews = await this.newsService.getAllRecentNews({ tag: 'all' },'1','10',)
         const tags = await this.prismaService.tags.findMany()
         const tagsWithImage = tags.map(tag => new ResponseTagDto({ ...tag, image: `http://192.168.0.103:3000/public/images/${tag.image}` }))
 
-        return new ResponseHomeDto({ user, trendingNews:trendingNews.data, tags: tagsWithImage});
+        return new ResponseHomeDto({ user, trendingNews: trendingNews.data, tags: tagsWithImage });
     }
 }

@@ -64,6 +64,7 @@ export class UserResponseDto {
     profileImage?: string
     followersCount?: number
     token?: string
+    isFollowing?: boolean
     @Exclude()
     password: string
     @Exclude()
