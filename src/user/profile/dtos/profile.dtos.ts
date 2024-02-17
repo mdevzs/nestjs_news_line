@@ -1,4 +1,5 @@
 import { Exclude } from "class-transformer";
+import { IsOptional, IsString } from "class-validator";
 
 export class ResponseProfileDto {
     profileImage: string
@@ -17,4 +18,22 @@ export class ResponseProfileDto {
     constructor(partial: Partial<ResponseProfileDto>) {
         Object.assign(this, partial)
     }
+}
+
+export class EditProfileDto {
+    @IsString()
+    @IsOptional()
+    fullName: string
+
+    @IsString()
+    @IsOptional()
+    username: string
+
+    @IsString()
+    @IsOptional()
+    bio: string
+
+    @IsString()
+    @IsOptional()
+    website: string
 }

@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ResponseProfileDto } from './dtos/profile.dtos';
+import { EditProfileDto, ResponseProfileDto } from './dtos/profile.dtos';
 import { ResponseRecentTrendingNewsDto } from 'src/news/dtos/news.dtos';
 import { formatDistance } from 'date-fns';
+import { profile } from 'console';
+import { UserResponseDto } from '../auth/dtos/auth.dto';
 
 @Injectable()
 export class ProfileService {
@@ -58,6 +60,37 @@ export class ProfileService {
             isFollowing,
             userNews: newsList,
         },);
+    }
+
+    async updateProifle(
+        authUserId: number,
+        profileId: number,
+        profileImage: Express.Multer.File,
+        { fullName, username, bio, website, }: EditProfileDto,
+    ) {
+        if (authUserId === profileId) {
+            const user = await this.prismaService.users.findUnique({
+                where: { id: authUserId },
+            })
+            //console.log(`username:${username}`);
+            const updateUser = await this.prismaService.users.update({
+                data: {
+                    fullName: fullName.length == 0 ? user.fullName : fullName,
+                    username: username.length == 0 ? user.username : username,
+                    bio,
+                    profileImage: profileImage != undefined ? profileImage.filename : user.profileImage,
+                },
+                where: {
+                    id: authUserId
+                }
+            })
+            return new UserResponseDto({
+                ...updateUser,
+                profileImage: updateUser.profileImage != null ? `http://localhost:3000/profile/images/${updateUser.profileImage}` : null,
+            });
+        } else {
+            throw new ForbiddenException("access dined")
+        }
     }
 
 }
