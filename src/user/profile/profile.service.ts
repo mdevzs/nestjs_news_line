@@ -86,7 +86,7 @@ export class ProfileService {
             })
             return new UserResponseDto({
                 ...updateUser,
-                profileImage: updateUser.profileImage != null ? `http://localhost:3000/profile/images/${updateUser.profileImage}` : null,
+                profileImage: updateUser.profileImage != null ? `http://192.168.0.103:3000/profile/images/${updateUser.profileImage}` : null,
             });
         } else {
             throw new ForbiddenException("access dined")
